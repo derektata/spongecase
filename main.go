@@ -10,6 +10,13 @@ import (
 	"github.com/spf13/pflag"
 )
 
+var (
+	textArg      = pflag.StringP("text", "t", "", "the text to convert")
+	fileArg      = pflag.StringP("file", "f", "", "the path to a file containing the text to convert")
+	clipboardArg = pflag.BoolP("clipboard", "c", false, "copy the output to the clipboard")
+	overwriteArg = pflag.BoolP("overwrite", "o", false, "overwrite the input file")
+)
+
 func convertToSpongebobCase(text string) string {
 	var builder strings.Builder
 	count := 0
@@ -41,11 +48,6 @@ func checkErrorAndExit(err error, message string) {
 }
 
 func main() {
-	textArg := pflag.StringP("text", "t", "", "the text to convert")
-	fileArg := pflag.StringP("file", "f", "", "the path to a file containing the text to convert")
-	clipboardArg := pflag.BoolP("clipboard", "c", false, "copy the output to the clipboard")
-	overwriteArg := pflag.BoolP("overwrite", "o", false, "overwrite the input file")
-
 	pflag.Parse()
 
 	var text string
