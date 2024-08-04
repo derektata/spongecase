@@ -1,6 +1,6 @@
 # spongecase
 
-<img src="docs/spongebob.png" width="200">
+<img src=".github/spongebob.png" width="200">
 
 ```
 ❯ ./spongecase -t 'easily generate spongebob-cased text'
