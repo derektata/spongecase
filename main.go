@@ -10,113 +10,52 @@ import (
 	"github.com/spf13/pflag"
 )
 
-var (
-	textArg      = pflag.StringP("text", "t", "", "the text to convert")
-	fileArg      = pflag.StringP("file", "f", "", "the path to a file containing the text to convert")
-	clipboardArg = pflag.BoolP("clipboard", "c", false, "copy the output to the clipboard")
-	overwriteArg = pflag.BoolP("overwrite", "o", false, "overwrite the input file")
-)
-
-// convertToSpongebobCase converts the input text to SpongeBob case.
-//
-// The input text is the string to be converted.
-// Returns the converted text as a string.
-func convertToSpongebobCase(text string) string {
-	var builder strings.Builder
-	count := 0
-	for _, c := range text {
-		if unicode.IsLetter(c) {
-			if count%2 == 0 {
-				builder.WriteRune(unicode.ToUpper(c))
+func spongebob(s string) string {
+	var b strings.Builder
+	upper := true
+	for _, r := range s {
+		if unicode.IsLetter(r) {
+			if upper {
+				r = unicode.ToUpper(r)
 			} else {
-				builder.WriteRune(unicode.ToLower(c))
+				r = unicode.ToLower(r)
 			}
-			count++
-		} else {
-			builder.WriteRune(c)
+			upper = !upper
 		}
+		b.WriteRune(r)
 	}
-	return builder.String()
+	return b.String()
 }
 
-// copyToClipboard copies the given text to the clipboard.
-//
-// Parameters:
-// - text: the text to be copied to the clipboard.
-//
-// Returns:
-// - None.
-func copyToClipboard(text string) {
-	err := clipboard.WriteAll(text)
-	checkErrorAndExit(err, "Failed to copy text to clipboard:")
-}
-
-// checkErrorAndExit checks if the given error is not nil and prints an error message to stderr along with the error.
-// If the error is not nil, the program exits with a status code of 1.
-//
-// Parameters:
-// - err: the error to check.
-// - message: the message to print before the error.
-//
-// Returns:
-// - None.
-func checkErrorAndExit(err error, message string) {
+func die(err error, msg string) {
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%s %v\n", message, err)
+		fmt.Fprintln(os.Stderr, msg, err)
 		os.Exit(1)
 	}
-}
-
-// handleFileInput reads the contents of a file and returns it as a string.
-//
-// Parameters:
-// - filePath: the path to the file to read.
-//
-// Returns:
-// - string: the contents of the file as a string.
-func handleFileInput(filePath string) string {
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		fmt.Fprintf(os.Stderr, "No such file: '%s'\n", filePath)
-		os.Exit(1)
-	}
-
-	bytes, err := os.ReadFile(filePath)
-	checkErrorAndExit(err, "Failed to read file:")
-
-	return string(bytes)
-}
-
-// handleFileOutput writes the given output string to the specified file path.
-//
-// Parameters:
-// - filePath: the path to the file to write to.
-// - output: the string to write to the file.
-//
-// Returns:
-// - None.
-func handleFileOutput(filePath, output string) {
-	err := os.WriteFile(filePath, []byte(output), 0644)
-	checkErrorAndExit(err, "Failed to write to file:")
 }
 
 func main() {
+	textArg := pflag.StringP("text", "t", "", "the text to convert")
+	fileArg := pflag.StringP("file", "f", "", "the path to a file containing the text to convert")
+	clipboardArg := pflag.BoolP("clipboard", "c", false, "copy the output to the clipboard")
+	overwriteArg := pflag.BoolP("overwrite", "o", false, "overwrite the input file")
 	pflag.Parse()
 
-	var text string
+	text := *textArg
 	if *fileArg != "" {
-		text = handleFileInput(*fileArg)
-	} else {
-		text = *textArg
+		b, err := os.ReadFile(*fileArg)
+		die(err, "Failed to read file:")
+		text = string(b)
 	}
 
-	output := convertToSpongebobCase(text)
-	fmt.Println(output)
+	out := spongebob(text)
+	fmt.Println(out)
 
 	if *fileArg != "" && *overwriteArg {
-		handleFileOutput(*fileArg, output)
+		die(os.WriteFile(*fileArg, []byte(out), 0644), "Failed to write to file:")
 	}
-
 	if *clipboardArg {
-		copyToClipboard(output)
+		die(clipboard.WriteAll(out), "Failed to copy text to clipboard:")
 	}
 }
+
